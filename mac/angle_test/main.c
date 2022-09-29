@@ -31,49 +31,12 @@ void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, in
     }
 }
 
-//GLuint CreateSimpleTexture2D(void) {
-//   // Texture object handle
-//   GLuint textureId;
-//
-//   // 2x2 Image, 3 bytes per pixel (R, G, B)
-//   GLubyte pixels[4 * 3] =
-//   {
-//      255,   0,   0, // Red
-//        0, 255,   0, // Green
-//        0,   0, 255, // Blue
-//      255, 255,   0  // Yellow
-//   };
-//
-//   // Use tightly packed data
-//   glPixelStorei ( GL_UNPACK_ALIGNMENT, 1 );
-//
-//   // Generate a texture object
-//   glGenTextures ( 1, &textureId );
-//
-//   // Bind the texture object
-//   glBindTexture ( GL_TEXTURE_2D, textureId );
-//
-//   // Load the texture
-//   glTexImage2D ( GL_TEXTURE_2D, 0, GL_RGB, 2, 2, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels );
-//
-//   // Set the filtering mode
-//   glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-//   glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-//
-//   return textureId;
-//
-//}
-
-GLuint loadShader(GLenum type, const char *shaderSrc) {
-    GLuint shader;
-
-    shader = glCreateShader ( type );
-    glShaderSource ( shader, 1, &shaderSrc, NULL );
-    glCompileShader ( shader );
-
+GLuint loadShader(GLenum type, const char *shader_src) {
+    GLuint shader = glCreateShader (type);
+    glShaderSource (shader, 1, &shader_src, NULL);
+    glCompileShader (shader);
     GLint compiled;
-    glGetShaderiv ( shader, GL_COMPILE_STATUS, &compiled );
-
+    glGetShaderiv (shader, GL_COMPILE_STATUS, &compiled);
     return shader;
 }
 
@@ -90,7 +53,6 @@ int main() {
 
     // ウィンドウの生成
     GLFWwindow* window = glfwCreateWindow(WindowWidth, WindowHeight, AppTitle, NULL, NULL);
-    
     if (!window) {
         glfwTerminate();
         return -1;
@@ -104,73 +66,49 @@ int main() {
     glfwSwapInterval(1);
 
     GLbyte vShaderStr[] =
-"attribute vec4 a_position;\n"
-"attribute vec2 a_texCoord;\n"
-"varying vec2 v_texCoord;\n"
-"void main()\n"
-"{\n"
-"gl_Position = a_position;\n"
-"v_texCoord = a_texCoord;\n"
-"}";
-
+        "attribute vec4 a_position;\n"
+        "attribute vec2 a_texCoord;\n"
+        "varying vec2 v_texCoord;\n"
+        "void main() {\n"
+        "gl_Position = a_position;\n"
+        "v_texCoord = a_texCoord;\n"
+        "}";
     GLbyte fShaderStr[] =
-"precision mediump float;\n"
-"varying vec2 v_texCoord;\n"
-"uniform sampler2D s_texture;\n"
-"void main()\n"
-"{\n"
-"gl_FragColor = texture2D(s_texture, v_texCoord);\n"
-"}\n";
-    
+        "precision mediump float;\n"
+        "varying vec2 v_texCoord;\n"
+        "uniform sampler2D s_texture;\n"
+        "void main() {\n"
+        "gl_FragColor = texture2D(s_texture, v_texCoord);\n"
+        "}\n";
     GLuint program = glCreateProgram(); // Handle to a program object
-    
-    GLuint vs = loadShader ( GL_VERTEX_SHADER, (const char*)vShaderStr );
-    GLuint fs = loadShader ( GL_FRAGMENT_SHADER, (const char*)fShaderStr );
-    
+    GLuint vs = loadShader (GL_VERTEX_SHADER, (const char*)vShaderStr);
+    GLuint fs = loadShader (GL_FRAGMENT_SHADER, (const char*)fShaderStr);
     glAttachShader(program, vs);
     glDeleteShader(vs);
     glAttachShader(program, fs);
     glDeleteShader(fs);
     
     glLinkProgram (program); // Link the program
-    
-    // Attribute locations
-    GLint mPositionLoc = glGetAttribLocation(program, "a_position");
+    GLint mPositionLoc = glGetAttribLocation(program, "a_position"); // Attribute locations
     GLint mTexCoordLoc = glGetAttribLocation(program, "a_texCoord");
-
-    // Sampler location
-    GLint mSamplerLoc = glGetUniformLocation(program, "s_texture");
+    GLint mSamplerLoc = glGetUniformLocation(program, "s_texture"); // Sampler location
 
     // Create Simple Texture 2D
-    // Use tightly packed data
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    
-    // Generate a texture object
-    GLuint texture;
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Use tightly packed data
+    GLuint texture; // Generate a texture object
     glGenTextures(1, &texture);
-    
-    // Bind the texture object
-    glBindTexture(GL_TEXTURE_2D, texture);
-    
-    // Load the texture: 2x2 Image, 3 bytes per pixel (R, G, B)
-    const size_t width                 = 320;
-    const size_t height                = 180;
+    glBindTexture(GL_TEXTURE_2D, texture); // Bind the texture object
+    const size_t width = 320; // Load the texture: 2x2 Image, 3 bytes per pixel (R, G, B)
+    const size_t height = 180;
     GLubyte pixels[width * height * 3];
     for(int i = 0; i < width * height * 3; i++) {
         pixels[i] = rnd(0,255);
     }
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-    
-    // Set the filtering mode
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // Set the filtering mode
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    GLuint mTexture = texture; // Texture handle
     
-    // Texture handle
-    GLuint mTexture = texture;
-    
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    
-    //GLuint programId = crateShader();
     
     GLfloat vertices[] = {
         -1.0f, 1.0f,  0.0f,  // Position 0
@@ -183,48 +121,28 @@ int main() {
         1.0f,  0.0f          // TexCoord 3
     };
     GLushort indices[] = {0, 1, 2, 0, 2, 3};
-    
-    //glEnable(GL_TEXTURE_2D); // ２次元テクスチャを有効にします
-    //glEnable(GL_BLEND); // アルファブレンド 設定
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     while (glfwWindowShouldClose(window) == GLFW_FALSE) {
         glfwPostEmptyEvent();
 
-        // Set the viewport
-        glViewport(0, 0, WindowWidth * 2, WindowHeight * 2);
-
-        // Clear the color buffer
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // Use the program object
-        glUseProgram(program);
-        
-        // Load the vertex position
-        glVertexAttribPointer(mPositionLoc, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), vertices);
-        // Load the texture coordinate
-        glVertexAttribPointer(mTexCoordLoc, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
-                              vertices + 3);
-
+        glViewport(0, 0, WindowWidth * 2, WindowHeight * 2); // Set the viewport
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT); // Clear the color buffer
+        glUseProgram(program); // Use the program object
+        glVertexAttribPointer(mPositionLoc, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), vertices); // Load the vertex position
+        glVertexAttribPointer(mTexCoordLoc, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), vertices + 3); // Load the texture coordinate
         glEnableVertexAttribArray(mPositionLoc);
         glEnableVertexAttribArray(mTexCoordLoc);
-        
         for(int i = 0; i < width * height * 3; i++) {
             pixels[i] = rnd(0,255);
         }
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-
-        // Bind the texture
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0); // Bind the texture
         glBindTexture(GL_TEXTURE_2D, mTexture);
-
-        // Set the texture sampler to texture unit to 0
-        glUniform1i(mSamplerLoc, 0);
-
+        glUniform1i(mSamplerLoc, 0); // Set the texture sampler to texture unit to 0
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
         
         glfwSwapBuffers(window);
-
         glfwWaitEvents();
     }
 
